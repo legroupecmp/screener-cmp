@@ -20,6 +20,7 @@ from yfinance import EquityQuery
 MIN_MOVE_PCT      = 50          # J1 : hausse minimale en %
 MAX_MARKET_CAP    = 300_000_000 # small cap : capitalisation max ($)
 MIN_VOLUME_J1     = 100_000_000 # J1 : volume minimum (actions)
+MIN_PRICE         = 0.50        # J1 : clôture minimum ($) - sinon le titre est ignoré
 VOLUME_RATIO      = 10          # consolidation : volume <= volume J1 / 10
 RUN_MAX_DAYS      = 2           # le "J1" peut compter 1 ou 2 jours de gros volume
 CONSOL_MAX_DAYS   = 5           # consolidation de 1 à 5 jours maximum
@@ -44,6 +45,7 @@ def find_j1_today():
         EquityQuery("gt", ["percentchange", MIN_MOVE_PCT]),
         EquityQuery("lt", ["intradaymarketcap", MAX_MARKET_CAP]),
         EquityQuery("gt", ["dayvolume", MIN_VOLUME_J1]),
+        EquityQuery("gt", ["intradayprice", MIN_PRICE]),
     ])
     res = yf.screen(q, size=250, sortField="percentchange", sortAsc=False)
     return [r["symbol"] for r in res.get("quotes", [])]
@@ -68,8 +70,9 @@ def analyze(h, added):
     move = (a.Close / prev.Close - 1) * 100
     res = {"anchor_date": dates[ia], "move": move, "j1_vol": int(a.Volume),
            "status": "invalide", "why": "", "consol_days": 0}
-    if move < MIN_MOVE_PCT or a.Volume < MIN_VOLUME_J1:
-        res["why"] = "J1 ne respecte pas les critères (move / volume)"
+    if a.Close < MIN_PRICE or move < MIN_MOVE_PCT or a.Volume < MIN_VOLUME_J1:
+        # J1 qui ne respecte pas les critères (prix, move, volume) : on l'ignore
+        res.update(status="ignore", why="J1 ne respecte pas les critères")
         return res
 
     # --- le "run" : J1 + éventuellement un 2e jour vert à gros volume ---
@@ -154,12 +157,15 @@ def run():
         age = (datetime.fromisoformat(today) - datetime.fromisoformat(w["added"])).days
         if age > KEEP_DAYS:
             continue
-        keep.append(w)
         try:
             e = analyze(bars(w["symbol"]), w["added"])
         except Exception as ex:
             print("Erreur", w["symbol"], ex, file=sys.stderr)
+            keep.append(w)
             continue
+        if e and e["status"] == "ignore":
+            continue  # pas gardé dans la watchlist
+        keep.append(w)
         if e:
             e["symbol"] = w["symbol"]
             groups[e["status"]].append(e)
