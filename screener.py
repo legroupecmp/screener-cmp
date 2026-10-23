@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
-"""Screener "Mid Candle Breakout" (small caps) - mise à jour quotidienne.
+"""Screener "Mid Candle Breakout" (small caps) - version consolidation.
 
-Jour 1 (J1) : small cap qui a bougé de +X % avec un gros volume.
-Jour 2 (J2) : volume <= volume J1 / 20 et petit gap down à l'ouverture.
+Setup :
+  1. J1 : gros jour (ou 2 jours) avec >= 100 M d'actions et un gros mouvement.
+  2. Consolidation : 1 à 5 jours, volume au plus égal à (volume J1 / 10),
+     clôtures dans la zone médiane/haute du J1 (jamais sous 40 % de sa plage).
+  3. Cassure : clôture au-dessus du plus haut du J1 après la consolidation.
 
-Chaque soir après la clôture :
-  1. on repère les J1 du jour (ils iront dans « À surveiller demain »)
-  2. on vérifie les J1 des jours précédents : si J2 respecte les critères -> SIGNAL
+La page est mise à jour chaque soir après la clôture. La cassure / retest sur
+30 minutes reste à ton oeil : la page te dit quels titres surveiller demain.
 """
 import html, json, sys
 from datetime import datetime, timezone
@@ -18,10 +20,16 @@ from yfinance import EquityQuery
 MIN_MOVE_PCT      = 50          # J1 : hausse minimale en %
 MAX_MARKET_CAP    = 300_000_000 # small cap : capitalisation max ($)
 MIN_VOLUME_J1     = 100_000_000 # J1 : volume minimum (actions)
-VOLUME_RATIO      = 20          # J2 : volume <= volume J1 / 20
-GAP_MIN_PCT       = -15.0       # J2 : gap down le plus profond accepté
-GAP_MAX_PCT       = -2.0        # J2 : gap down le moins profond accepté
-KEEP_DAYS         = 10          # historique conservé (jours calendaires)
+VOLUME_RATIO      = 10          # consolidation : volume <= volume J1 / 10
+RUN_MAX_DAYS      = 2           # le "J1" peut compter 1 ou 2 jours de gros volume
+CONSOL_MAX_DAYS   = 5           # consolidation de 1 à 5 jours maximum
+CONSOL_MIN_LEVEL  = 0.40        # clôture >= 40 % de la plage (bas->haut) du J1
+KEEP_DAYS         = 14          # jours calendaires de suivi
+
+# Titres à suivre à la main : {"TICKER": "date du J1 AAAA-MM-JJ"}
+MANUAL_WATCH = {
+    "XLAB": "2026-10-16",
+}
 # ================================================================================
 
 ROOT = Path(__file__).parent
@@ -30,7 +38,7 @@ OUT = ROOT / "docs" / "index.html"
 
 
 def find_j1_today():
-    """Small caps du jour qui respectent les critères J1 (via le screener Yahoo)."""
+    """Small caps du jour qui respectent les critères J1 (screener Yahoo)."""
     q = EquityQuery("and", [
         EquityQuery("eq", ["region", "us"]),
         EquityQuery("gt", ["percentchange", MIN_MOVE_PCT]),
@@ -42,52 +50,79 @@ def find_j1_today():
 
 
 def bars(symbol):
-    h = yf.Ticker(symbol).history(period="15d", interval="1d", auto_adjust=False)
+    h = yf.Ticker(symbol).history(period="2mo", interval="1d", auto_adjust=False)
     return h.dropna(subset=["Close"])
 
 
-def eval_pair(h, j1_date):
-    """h = DataFrame journalier. Retourne dict J1/J2 ou None si pas évaluable."""
-    h = h.copy()
-    h.index = [d.strftime("%Y-%m-%d") for d in h.index]
-    if j1_date not in h.index:
+def analyze(h, added):
+    """Analyse un titre à partir de son historique journalier.
+    Retourne un dict avec 'status' parmi : run, consol, cassure, invalide."""
+    dates = [d.strftime("%Y-%m-%d") for d in h.index]
+    rows = list(h.itertuples(index=False))
+    n = len(rows)
+    eligible = [i for i, d in enumerate(dates) if d <= added]
+    if not eligible or eligible[-1] == 0:
         return None
-    i = list(h.index).index(j1_date)
-    if i == 0:
-        return None
-    prev, j1 = h.iloc[i - 1], h.iloc[i]
-    out = {
-        "j1_date": j1_date,
-        "j1_move": (j1.Close / prev.Close - 1) * 100,
-        "j1_close": float(j1.Close),
-        "j1_vol": int(j1.Volume),
-        "j2": None,
-    }
-    if i + 1 < len(h):
-        j2 = h.iloc[i + 1]
-        out["j2"] = {
-            "date": h.index[i + 1],
-            "open": float(j2.Open),
-            "close": float(j2.Close),
-            "gap": (j2.Open / j1.Close - 1) * 100,
-            "vol": int(j2.Volume),
-            "vol_ratio": (j1.Volume / j2.Volume) if j2.Volume else float("inf"),
-        }
-    return out
+    ia = eligible[-1]
+    a, prev = rows[ia], rows[ia - 1]
+    move = (a.Close / prev.Close - 1) * 100
+    res = {"anchor_date": dates[ia], "move": move, "j1_vol": int(a.Volume),
+           "status": "invalide", "why": "", "consol_days": 0}
+    if move < MIN_MOVE_PCT or a.Volume < MIN_VOLUME_J1:
+        res["why"] = "J1 ne respecte pas les critères (move / volume)"
+        return res
 
+    # --- le "run" : J1 + éventuellement un 2e jour vert à gros volume ---
+    run, maxvol, i = [ia], a.Volume, ia + 1
+    while len(run) < RUN_MAX_DAYS and i < n:
+        r = rows[i]
+        if r.Close > r.Open and r.Volume > maxvol / VOLUME_RATIO:
+            run.append(i)
+            maxvol = max(maxvol, r.Volume)
+            i += 1
+        else:
+            break
+    low = min(rows[j].Low for j in run)
+    high = max(rows[j].High for j in run)
+    thr = maxvol / VOLUME_RATIO
+    floor = low + CONSOL_MIN_LEVEL * (high - low)
+    res.update({"run_days": len(run), "run_end": dates[run[-1]], "j1_vol": int(maxvol),
+                "run_low": float(low), "run_high": float(high),
+                "mid": float((low + high) / 2), "floor": float(floor)})
 
-def verdict(e):
-    ok_j1 = e["j1_move"] >= MIN_MOVE_PCT and e["j1_vol"] >= MIN_VOLUME_J1
-    if not ok_j1:
-        return "j1_invalide", ["J1 ne respecte plus les critères"]
-    if e["j2"] is None:
-        return "attente", []
-    j2, why = e["j2"], []
-    if not (GAP_MIN_PCT <= j2["gap"] <= GAP_MAX_PCT):
-        why.append(f"gap {j2['gap']:+.1f} % hors [{GAP_MIN_PCT:g} ; {GAP_MAX_PCT:g}]")
-    if j2["vol_ratio"] < VOLUME_RATIO:
-        why.append(f"volume seulement {j2['vol_ratio']:.1f}x plus bas (< {VOLUME_RATIO}x)")
-    return ("signal" if not why else "rejete"), why
+    # --- jours suivants ---
+    consol = []
+    for j in range(i, n):
+        r = rows[j]
+        if r.Volume <= thr and floor <= r.Close <= high:
+            consol.append(j)
+            if len(consol) > CONSOL_MAX_DAYS:
+                res["why"] = f"consolidation trop longue (> {CONSOL_MAX_DAYS} jours)"
+                return res
+            continue
+        if r.Close > high and consol:
+            res.update(status="cassure", break_date=dates[j], break_vol=int(r.Volume),
+                       break_close=float(r.Close), consol_days=len(consol),
+                       consol_high=float(max(rows[k].High for k in consol)),
+                       consol_vol=int(max(rows[k].Volume for k in consol)))
+            return res
+        if r.Volume > thr:
+            res["why"] = f"{dates[j]} : volume {r.Volume/1e6:.1f} M > J1/{VOLUME_RATIO} ({thr/1e6:.1f} M)"
+        elif r.Close < floor:
+            res["why"] = f"{dates[j]} : clôture {r.Close:.2f} $ sous {CONSOL_MIN_LEVEL:.0%} de la plage J1 ({floor:.2f} $)"
+        else:
+            res["why"] = f"{dates[j]} : cassure sans consolidation"
+        return res
+
+    if consol:
+        last = rows[consol[-1]]
+        res.update(status="consol", consol_days=len(consol),
+                   consol_high=float(max(rows[k].High for k in consol)),
+                   consol_vol=int(max(rows[k].Volume for k in consol)),
+                   last_close=float(last.Close), last_date=dates[consol[-1]])
+    else:
+        res.update(status="run", last_close=float(rows[run[-1]].Close), last_date=dates[run[-1]])
+    return res
 
 
 def load_state():
@@ -99,61 +134,46 @@ def load_state():
 def run():
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     state = load_state()
-    known = {(w["symbol"]) for w in state["watch"]}
+    known = {w["symbol"] for w in state["watch"]}
 
-    # 1) nouveaux J1 du jour
+    for s, d in MANUAL_WATCH.items():
+        if s not in known:
+            state["watch"].append({"symbol": s, "added": d})
+            known.add(s)
     try:
-        new = find_j1_today()
+        for s in find_j1_today():
+            if s not in known:
+                state["watch"].append({"symbol": s, "added": today})
+                known.add(s)
     except Exception as ex:
         print("Screener Yahoo indisponible :", ex, file=sys.stderr)
-        new = []
-    for s in new:
-        if s not in known:
-            state["watch"].append({"symbol": s, "added": today})
-            known.add(s)
 
-    # 2) évaluer tout ce qui est suivi
-    signals, waiting, rejected = [], [], []
+    groups = {"cassure": [], "consol": [], "run": [], "invalide": []}
     keep = []
     for w in state["watch"]:
         age = (datetime.fromisoformat(today) - datetime.fromisoformat(w["added"])).days
         if age > KEEP_DAYS:
             continue
+        keep.append(w)
         try:
-            h = bars(w["symbol"])
+            e = analyze(bars(w["symbol"]), w["added"])
         except Exception as ex:
             print("Erreur", w["symbol"], ex, file=sys.stderr)
-            keep.append(w)
             continue
-        # le J1 = dernière barre avant J2, retrouvé par la date d'ajout (la barre du jour d'ajout)
-        e = eval_pair(h, w.get("j1_date") or _guess_j1(h, w["added"]))
-        if not e:
-            keep.append(w)
-            continue
-        w["j1_date"] = e["j1_date"]
-        keep.append(w)
-        e["symbol"] = w["symbol"]
-        v, why = verdict(e)
-        e["why"] = why
-        {"signal": signals, "attente": waiting}.get(v, rejected).append(e)
+        if e:
+            e["symbol"] = w["symbol"]
+            groups[e["status"]].append(e)
     state["watch"] = keep
     state["updated"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
     STATE.write_text(json.dumps(state, indent=1))
     OUT.parent.mkdir(exist_ok=True)
-    OUT.write_text(render(signals, waiting, rejected, state["updated"]))
-    print(f"{len(signals)} signaux, {len(waiting)} à surveiller, {len(rejected)} rejetés")
-
-
-def _guess_j1(h, added):
-    """Dernière barre dont la date <= date d'ajout."""
-    dates = [d.strftime("%Y-%m-%d") for d in h.index]
-    ok = [d for d in dates if d <= added]
-    return ok[-1] if ok else added
+    OUT.write_text(render(groups, state["updated"]))
+    print({k: len(v) for k, v in groups.items()})
 
 
 # ------------------------------- HTML -------------------------------
-def fmt_vol(v):
-    return f"{v/1e6:,.1f} M" if v >= 1e6 else f"{v:,}"
+def vol(v):
+    return f"{v/1e6:,.1f} M"
 
 
 def link(sym):
@@ -161,38 +181,47 @@ def link(sym):
     return f'<a href="https://finance.yahoo.com/quote/{s}" target="_blank" rel="noopener">{s}</a>'
 
 
-def render(signals, waiting, rejected, updated):
-    def rows(items, kind):
-        if not items:
-            return '<tr><td colspan="9" class="empty">Aucun titre</td></tr>'
-        out = []
-        for e in items:
-            j2 = e["j2"]
-            if kind == "wait":
-                out.append(f"<tr><td>{link(e['symbol'])}</td><td>{e['j1_date']}</td>"
-                           f"<td class='up'>{e['j1_move']:+.1f} %</td><td>{fmt_vol(e['j1_vol'])}</td>"
-                           f"<td>${e['j1_close']:.2f}</td></tr>")
-            else:
-                cls = "sig" if kind == "sig" else ""
-                extra = "" if kind == "sig" else f"<td class='why'>{html.escape(' ; '.join(e['why']))}</td>"
-                out.append(f"<tr class='{cls}'><td>{link(e['symbol'])}</td><td>{e['j1_date']}</td>"
-                           f"<td class='up'>{e['j1_move']:+.1f} %</td><td>{fmt_vol(e['j1_vol'])}</td>"
-                           f"<td>${e['j1_close']:.2f}</td><td>{j2['date']}</td>"
-                           f"<td class='down'>{j2['gap']:+.1f} %</td><td>{fmt_vol(j2['vol'])}</td>"
-                           f"<td>{j2['vol_ratio']:.0f}x</td>{extra}</tr>")
-        return "".join(out)
+def table(head, rows_html, ncol):
+    body = "".join(rows_html) or f'<tr><td colspan="{ncol}" class="empty">Aucun titre</td></tr>'
+    th = "".join(f"<th>{h}</th>" for h in head)
+    return f'<div class="wrap"><table><tr>{th}</tr>{body}</table></div>'
 
-    full_head = ("<th>Ticker</th><th>J1</th><th>Move J1</th><th>Vol J1</th><th>Clôture J1</th>"
-                 "<th>J2</th><th>Gap J2</th><th>Vol J2</th><th>Ratio vol</th>")
+
+def render(g, updated):
     upd = datetime.fromisoformat(updated).strftime("%Y-%m-%d %H:%M UTC")
+
+    cass = [f"<tr class='sig'><td>{link(e['symbol'])}</td><td>{e['anchor_date']}</td>"
+            f"<td class='up'>{e['move']:+.0f} %</td><td>{vol(e['j1_vol'])}</td>"
+            f"<td>{e['consol_days']}</td><td>{vol(e['consol_vol'])}</td>"
+            f"<td>{e['break_date']}</td><td>${e['break_close']:.2f}</td><td>{vol(e['break_vol'])}</td>"
+            f"<td>${e['consol_high']:.2f} / ${e['run_high']:.2f}</td></tr>"
+            for e in sorted(g["cassure"], key=lambda x: x["break_date"], reverse=True)]
+
+    cons = [f"<tr><td>{link(e['symbol'])}</td><td>{e['anchor_date']}</td>"
+            f"<td class='up'>{e['move']:+.0f} %</td><td>{vol(e['j1_vol'])}</td>"
+            f"<td>{e['consol_days']}</td><td>{vol(e['consol_vol'])} ({e['j1_vol']/max(e['consol_vol'],1):.0f}x moins)</td>"
+            f"<td>${e['last_close']:.2f}</td><td>${e['mid']:.2f}</td>"
+            f"<td>${e['consol_high']:.2f}</td><td>${e['run_high']:.2f}</td></tr>"
+            for e in sorted(g["consol"], key=lambda x: x["anchor_date"], reverse=True)]
+
+    runs = [f"<tr><td>{link(e['symbol'])}</td><td>{e['anchor_date']}</td>"
+            f"<td class='up'>{e['move']:+.0f} %</td><td>{vol(e['j1_vol'])}</td>"
+            f"<td>{e['run_days']}</td><td>${e['last_close']:.2f}</td>"
+            f"<td>${e['mid']:.2f}</td><td>${e['run_high']:.2f}</td></tr>"
+            for e in sorted(g["run"], key=lambda x: x["anchor_date"], reverse=True)]
+
+    inv = [f"<tr><td>{link(e['symbol'])}</td><td>{e['anchor_date']}</td>"
+           f"<td class='why'>{html.escape(e['why'])}</td></tr>"
+           for e in sorted(g["invalide"], key=lambda x: x["anchor_date"], reverse=True)]
+
     return f"""<!doctype html><html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>Screener Mid Candle Breakout</title>
 <style>
 :root{{--bg:#fff;--card:#f6f7f9;--tx:#16181d;--mut:#6b7280;--bd:#e3e6ea;--up:#0a8f4d;--dn:#d23b3b;--ac:#2563eb}}
 @media(prefers-color-scheme:dark){{:root{{--bg:#0f1115;--card:#171a21;--tx:#e8eaee;--mut:#8b93a1;--bd:#262b35;--up:#3ecf8e;--dn:#f26d6d;--ac:#6ea0ff}}}}
-body{{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,sans-serif;padding:16px;max-width:1000px;margin:auto}}
-h1{{font-size:22px;margin:8px 0 2px}}h2{{font-size:16px;margin:28px 0 8px}}
-.sub{{color:var(--mut);font-size:13px}}
+body{{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,sans-serif;padding:16px;max-width:1100px;margin:auto}}
+h1{{font-size:22px;margin:8px 0 2px}}h2{{font-size:16px;margin:28px 0 4px}}
+.sub{{color:var(--mut);font-size:13px}}.hint{{color:var(--mut);font-size:13px;margin:0 0 8px}}
 .crit{{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;margin:14px 0;font-size:13px;color:var(--mut)}}
 .crit b{{color:var(--tx)}}
 .wrap{{overflow-x:auto;border:1px solid var(--bd);border-radius:10px}}
@@ -201,19 +230,27 @@ th,td{{padding:8px 12px;text-align:left;border-bottom:1px solid var(--bd)}}
 th{{background:var(--card);font-weight:600;font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.03em}}
 tr:last-child td{{border-bottom:0}}
 a{{color:var(--ac);font-weight:600;text-decoration:none}}
-.up{{color:var(--up)}}.down{{color:var(--dn)}}.empty{{color:var(--mut);text-align:center;padding:18px}}
+.up{{color:var(--up)}}.empty{{color:var(--mut);text-align:center;padding:18px}}
 tr.sig{{background:color-mix(in srgb,var(--up) 10%,transparent)}}.why{{color:var(--mut);white-space:normal}}
 </style></head><body>
 <h1>Screener Mid Candle Breakout</h1>
 <div class="sub">Dernière mise à jour : {upd}</div>
-<div class="crit"><b>J1</b> : small cap &lt; {MAX_MARKET_CAP/1e6:g} M$, hausse ≥ {MIN_MOVE_PCT} %, volume ≥ {MIN_VOLUME_J1/1e6:g} M &nbsp;·&nbsp;
-<b>J2</b> : gap down entre {GAP_MAX_PCT:g} % et {GAP_MIN_PCT:g} %, volume ≤ J1 / {VOLUME_RATIO}</div>
-<h2>Signaux (J2 confirmé)</h2>
-<div class="wrap"><table><tr>{full_head}</tr>{rows(signals, "sig")}</table></div>
-<h2>À surveiller demain (J1 validé aujourd'hui)</h2>
-<div class="wrap"><table><tr><th>Ticker</th><th>J1</th><th>Move J1</th><th>Vol J1</th><th>Clôture J1</th></tr>{rows(waiting, "wait")}</table></div>
-<h2>J2 récents non retenus</h2>
-<div class="wrap"><table><tr>{full_head}<th>Raison</th></tr>{rows(rejected, "rej")}</table></div>
+<div class="crit"><b>J1</b> : small cap &lt; {MAX_MARKET_CAP/1e6:g} M$, hausse ≥ {MIN_MOVE_PCT} %, volume ≥ {MIN_VOLUME_J1/1e6:g} M (1 à {RUN_MAX_DAYS} jours) &nbsp;·&nbsp;
+<b>Consolidation</b> : 1 à {CONSOL_MAX_DAYS} jours, volume ≤ J1 / {VOLUME_RATIO}, clôtures entre {CONSOL_MIN_LEVEL:.0%} de la plage du J1 et son plus haut &nbsp;·&nbsp;
+<b>Cassure</b> : clôture au-dessus du plus haut du J1</div>
+
+<h2>En consolidation : à surveiller demain</h2>
+<p class="hint">C'est ici que tu prépares ta cassure + retest sur 30 minutes. Niveaux : plafond de consolidation, puis plus haut du J1.</p>
+{table(["Ticker","J1","Move J1","Vol J1","Jours conso","Vol conso max","Dernière clôture","Milieu J1","Plafond conso","Haut J1"], cons, 10)}
+
+<h2>Cassures récentes (clôture au-dessus du haut du J1)</h2>
+{table(["Ticker","J1","Move J1","Vol J1","Jours conso","Vol conso max","Date cassure","Clôture","Vol cassure","Plafond conso / Haut J1"], cass, 10)}
+
+<h2>Nouveaux J1 (en attente de consolidation)</h2>
+{table(["Ticker","J1","Move J1","Vol J1","Jours gros vol","Dernière clôture","Milieu J1","Haut J1"], runs, 8)}
+
+<h2>Invalidés</h2>
+{table(["Ticker","J1","Raison"], inv, 3)}
 </body></html>"""
 
 
