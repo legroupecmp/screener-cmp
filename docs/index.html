@@ -3,9 +3,9 @@
 <style>
 :root{--bg:#fff;--card:#f6f7f9;--tx:#16181d;--mut:#6b7280;--bd:#e3e6ea;--up:#0a8f4d;--dn:#d23b3b;--ac:#2563eb}
 @media(prefers-color-scheme:dark){:root{--bg:#0f1115;--card:#171a21;--tx:#e8eaee;--mut:#8b93a1;--bd:#262b35;--up:#3ecf8e;--dn:#f26d6d;--ac:#6ea0ff}}
-body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,sans-serif;padding:16px;max-width:1000px;margin:auto}
-h1{font-size:22px;margin:8px 0 2px}h2{font-size:16px;margin:28px 0 8px}
-.sub{color:var(--mut);font-size:13px}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,sans-serif;padding:16px;max-width:1100px;margin:auto}
+h1{font-size:22px;margin:8px 0 2px}h2{font-size:16px;margin:28px 0 4px}
+.sub{color:var(--mut);font-size:13px}.hint{color:var(--mut);font-size:13px;margin:0 0 8px}
 .crit{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;margin:14px 0;font-size:13px;color:var(--mut)}
 .crit b{color:var(--tx)}
 .wrap{overflow-x:auto;border:1px solid var(--bd);border-radius:10px}
@@ -14,17 +14,25 @@ th,td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--bd)}
 th{background:var(--card);font-weight:600;font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.03em}
 tr:last-child td{border-bottom:0}
 a{color:var(--ac);font-weight:600;text-decoration:none}
-.up{color:var(--up)}.down{color:var(--dn)}.empty{color:var(--mut);text-align:center;padding:18px}
+.up{color:var(--up)}.empty{color:var(--mut);text-align:center;padding:18px}
 tr.sig{background:color-mix(in srgb,var(--up) 10%,transparent)}.why{color:var(--mut);white-space:normal}
 </style></head><body>
 <h1>Screener Mid Candle Breakout</h1>
-<div class="sub">Dernière mise à jour : 2026-10-23 00:02 UTC</div>
-<div class="crit"><b>J1</b> : small cap &lt; 300 M$, hausse ≥ 50 %, volume ≥ 100 M &nbsp;·&nbsp;
-<b>J2</b> : gap down entre -2 % et -15 %, volume ≤ J1 / 20</div>
-<h2>Signaux (J2 confirmé)</h2>
-<div class="wrap"><table><tr><th>Ticker</th><th>J1</th><th>Move J1</th><th>Vol J1</th><th>Clôture J1</th><th>J2</th><th>Gap J2</th><th>Vol J2</th><th>Ratio vol</th></tr><tr class='sig'><td><a href="https://finance.yahoo.com/quote/PRSO" target="_blank" rel="noopener">PRSO</a></td><td>2026-10-20</td><td class='up'>+55.3 %</td><td>230.7 M</td><td>$0.59</td><td>2026-10-21</td><td class='down'>-11.9 %</td><td>11.2 M</td><td>21x</td></tr></table></div>
-<h2>À surveiller demain (J1 validé aujourd'hui)</h2>
-<div class="wrap"><table><tr><th>Ticker</th><th>J1</th><th>Move J1</th><th>Vol J1</th><th>Clôture J1</th></tr><tr><td><a href="https://finance.yahoo.com/quote/SHFS" target="_blank" rel="noopener">SHFS</a></td><td>2026-10-21</td><td class='up'>+71.1 %</td><td>572.0 M</td><td>$0.15</td></tr></table></div>
-<h2>J2 récents non retenus</h2>
-<div class="wrap"><table><tr><th>Ticker</th><th>J1</th><th>Move J1</th><th>Vol J1</th><th>Clôture J1</th><th>J2</th><th>Gap J2</th><th>Vol J2</th><th>Ratio vol</th><th>Raison</th></tr><tr class=''><td><a href="https://finance.yahoo.com/quote/SDST" target="_blank" rel="noopener">SDST</a></td><td>2026-10-15</td><td class='up'>+53.8 %</td><td>1,641.1 M</td><td>$0.04</td><td>2026-10-16</td><td class='down'>-17.5 %</td><td>137.8 M</td><td>12x</td><td class='why'>gap -17.5 % hors [-15 ; -2] ; volume seulement 11.9x plus bas (&lt; 20x)</td></tr><tr class=''><td><a href="https://finance.yahoo.com/quote/XLAB" target="_blank" rel="noopener">XLAB</a></td><td>2026-10-16</td><td class='up'>+72.8 %</td><td>171.6 M</td><td>$2.35</td><td>2026-10-19</td><td class='down'>+19.1 %</td><td>71.5 M</td><td>2x</td><td class='why'>gap +19.1 % hors [-15 ; -2] ; volume seulement 2.4x plus bas (&lt; 20x)</td></tr><tr class=''><td><a href="https://finance.yahoo.com/quote/TMSH" target="_blank" rel="noopener">TMSH</a></td><td>2026-10-19</td><td class='up'>+100.0 %</td><td>439.4 M</td><td>$0.00</td><td>2026-10-20</td><td class='down'>+0.0 %</td><td>391.8 M</td><td>1x</td><td class='why'>gap +0.0 % hors [-15 ; -2] ; volume seulement 1.1x plus bas (&lt; 20x)</td></tr><tr class=''><td><a href="https://finance.yahoo.com/quote/EARI" target="_blank" rel="noopener">EARI</a></td><td>2026-10-19</td><td class='up'>+50.0 %</td><td>110.7 M</td><td>$0.00</td><td>2026-10-20</td><td class='down'>+0.0 %</td><td>1,044.4 M</td><td>0x</td><td class='why'>gap +0.0 % hors [-15 ; -2] ; volume seulement 0.1x plus bas (&lt; 20x)</td></tr></table></div>
+<div class="sub">Dernière mise à jour : 2026-10-23 20:20 UTC</div>
+<div class="crit"><b>J1</b> : small cap &lt; 300 M$, hausse ≥ 50 %, volume ≥ 100 M (1 à 2 jours) &nbsp;·&nbsp;
+<b>Consolidation</b> : 1 à 5 jours, volume ≤ J1 / 10, clôtures entre 40% de la plage du J1 et son plus haut &nbsp;·&nbsp;
+<b>Cassure</b> : clôture au-dessus du plus haut du J1</div>
+
+<h2>En consolidation : à surveiller demain</h2>
+<p class="hint">C'est ici que tu prépares ta cassure + retest sur 30 minutes. Niveaux : plafond de consolidation, puis plus haut du J1.</p>
+<div class="wrap"><table><tr><th>Ticker</th><th>J1</th><th>Move J1</th><th>Vol J1</th><th>Jours conso</th><th>Vol conso max</th><th>Dernière clôture</th><th>Milieu J1</th><th>Plafond conso</th><th>Haut J1</th></tr><tr><td colspan="10" class="empty">Aucun titre</td></tr></table></div>
+
+<h2>Cassures récentes (clôture au-dessus du haut du J1)</h2>
+<div class="wrap"><table><tr><th>Ticker</th><th>J1</th><th>Move J1</th><th>Vol J1</th><th>Jours conso</th><th>Vol conso max</th><th>Date cassure</th><th>Clôture</th><th>Vol cassure</th><th>Plafond conso / Haut J1</th></tr><tr class='sig'><td><a href="https://finance.yahoo.com/quote/XLAB" target="_blank" rel="noopener">XLAB</a></td><td>2026-10-16</td><td class='up'>+73 %</td><td>171.6 M</td><td>2</td><td>8.5 M</td><td>2026-10-22</td><td>$4.71</td><td>67.9 M</td><td>$3.05 / $3.84</td></tr></table></div>
+
+<h2>Nouveaux J1 (en attente de consolidation)</h2>
+<div class="wrap"><table><tr><th>Ticker</th><th>J1</th><th>Move J1</th><th>Vol J1</th><th>Jours gros vol</th><th>Dernière clôture</th><th>Milieu J1</th><th>Haut J1</th></tr><tr><td colspan="8" class="empty">Aucun titre</td></tr></table></div>
+
+<h2>Invalidés</h2>
+<div class="wrap"><table><tr><th>Ticker</th><th>J1</th><th>Raison</th></tr><tr><td><a href="https://finance.yahoo.com/quote/SHFS" target="_blank" rel="noopener">SHFS</a></td><td>2026-10-23</td><td class='why'>J1 ne respecte pas les critères (move / volume)</td></tr><tr><td><a href="https://finance.yahoo.com/quote/TMSH" target="_blank" rel="noopener">TMSH</a></td><td>2026-10-20</td><td class='why'>J1 ne respecte pas les critères (move / volume)</td></tr><tr><td><a href="https://finance.yahoo.com/quote/PRSO" target="_blank" rel="noopener">PRSO</a></td><td>2026-10-20</td><td class='why'>2026-10-21 : clôture 0.39 $ sous 40% de la plage J1 (0.51 $)</td></tr><tr><td><a href="https://finance.yahoo.com/quote/EARI" target="_blank" rel="noopener">EARI</a></td><td>2026-10-20</td><td class='why'>J1 ne respecte pas les critères (move / volume)</td></tr><tr><td><a href="https://finance.yahoo.com/quote/SDST" target="_blank" rel="noopener">SDST</a></td><td>2026-10-15</td><td class='why'>2026-10-16 : clôture 0.03 $ sous 40% de la plage J1 (0.04 $)</td></tr></table></div>
 </body></html>
