@@ -341,27 +341,56 @@ def run():
 
 
 # ================================== HTML =======================================
+# Style repris du CMP Journal : bandeau marine, fond crème, cartes blanches, titres en Playfair Display.
+FONTS = ('<link rel="preconnect" href="https://fonts.googleapis.com">'
+         '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
+         '<link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&'
+         'family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">')
+
 CSS = """
-:root{--bg:#fff;--card:#f6f7f9;--tx:#16181d;--mut:#6b7280;--bd:#e3e6ea;--up:#0a8f4d;--dn:#d23b3b;--ac:#2563eb}
-@media(prefers-color-scheme:dark){:root{--bg:#0f1115;--card:#171a21;--tx:#e8eaee;--mut:#8b93a1;--bd:#262b35;--up:#3ecf8e;--dn:#f26d6d;--ac:#6ea0ff}}
-body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,sans-serif;padding:16px;max-width:1100px;margin:auto}
-h1{font-size:22px;margin:8px 0 2px}h2{font-size:16px;margin:28px 0 4px}
-.sub{color:var(--mut);font-size:13px}.hint{color:var(--mut);font-size:13px;margin:0 0 8px}
-.tabs{display:flex;gap:6px;margin:16px 0 4px;border-bottom:1px solid var(--bd);overflow-x:auto}
-.tab{background:none;border:0;border-bottom:2px solid transparent;color:var(--mut);font:600 15px system-ui,sans-serif;padding:10px 14px;cursor:pointer;white-space:nowrap}
-.tab.on{color:var(--tx);border-bottom-color:var(--ac)}
-.badge{display:inline-block;min-width:18px;padding:0 6px;margin-left:6px;border-radius:9px;background:var(--card);border:1px solid var(--bd);font-size:12px;color:var(--mut)}
-.crit{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;margin:14px 0;font-size:13px;color:var(--mut)}
-.crit b{color:var(--tx)}
-.wrap{overflow-x:auto;border:1px solid var(--bd);border-radius:10px}
+:root{--navy:#1a2744;--cream:#f5f0e8;--green:#1a7a4a;--red:#b23a2e;--mut:#7a8599;--blue:#2d4a8a;--bd:#ece7de}
+*{box-sizing:border-box}
+body{margin:0;background:var(--cream);color:var(--navy);font:15px/1.5 'Lato',system-ui,sans-serif}
+.wm{position:fixed;inset:0;background:url(logo.png) center 38%/560px no-repeat;opacity:.07;pointer-events:none}
+.top{position:relative;background:var(--navy);color:#fff;padding:0 28px;height:62px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{font:500 22px 'Playfair Display',Georgia,serif}
+.brand small{font:700 11px 'Lato',sans-serif;letter-spacing:.18em;color:#8c97b2;margin-left:14px;text-transform:uppercase}
+.sync{font-size:12px;color:#aab3c8;white-space:nowrap}
+.sync:before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#4fb286;margin-right:7px}
+nav.tabs{position:relative;background:#fff;border-bottom:1px solid var(--bd);padding:0 22px;display:flex;gap:4px;overflow-x:auto}
+.tab{background:none;border:0;border-bottom:2px solid transparent;color:var(--mut);font:700 12px 'Lato',sans-serif;letter-spacing:.14em;text-transform:uppercase;padding:22px 18px 18px;cursor:pointer;white-space:nowrap}
+.tab:hover{color:var(--navy)}
+.tab.on{color:var(--navy);border-bottom-color:var(--navy)}
+.badge{display:inline-block;min-width:20px;padding:1px 7px;margin-left:8px;border-radius:10px;background:#eef0f4;color:var(--mut);font-size:11px;letter-spacing:0}
+.tab.on .badge{background:var(--navy);color:#fff}
+main{position:relative;max-width:1180px;margin:0 auto;padding:26px 28px 70px}
+.pill{display:inline-block;background:#fff;border:1px solid #cdd0d6;color:var(--blue);border-radius:20px;padding:6px 16px;font:700 11px 'Lato',sans-serif;letter-spacing:.14em;text-transform:uppercase;box-shadow:0 1px 3px rgba(26,39,68,.06)}
+h1{font:400 34px/1.2 'Playfair Display',Georgia,serif;margin:22px 0 4px}
+.lead{color:var(--mut);margin:0 0 22px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:18px}
+.stat,.card{background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(26,39,68,.07);border:1px solid rgba(26,39,68,.04)}
+.stat{padding:18px 20px}
+.stat .k{font:700 11px 'Lato',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
+.stat .v{font:400 32px/1.25 'Playfair Display',Georgia,serif;margin:2px 0}
+.stat .s{font-size:12px;color:var(--mut)}
+.card{padding:22px 24px;margin-bottom:18px}
+.card h2{font:700 13px 'Lato',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin:0 0 4px}
+.hint{color:var(--mut);font-size:13px;margin:0 0 14px}
+.crit{font-size:13px;color:var(--mut);line-height:1.7}
+.crit b{color:var(--navy)}
+.wrap{overflow-x:auto;margin-top:10px}
 table{border-collapse:collapse;width:100%;font-size:14px;white-space:nowrap}
-th,td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--bd)}
-th{background:var(--card);font-weight:600;font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.03em}
+th,td{padding:10px 14px 10px 0;text-align:left;border-bottom:1px solid var(--bd)}
+th{font:700 11px 'Lato',sans-serif;color:var(--mut);text-transform:uppercase;letter-spacing:.12em}
 tr:last-child td{border-bottom:0}
-a{color:var(--ac);font-weight:600;text-decoration:none}
-.up{color:var(--up)}.dn{color:var(--dn)}.empty{color:var(--mut);text-align:center;padding:18px}
-tr.sig{background:color-mix(in srgb,var(--up) 10%,transparent)}tr.red{background:color-mix(in srgb,var(--dn) 10%,transparent)}
+a{color:var(--blue);font-weight:700;text-decoration:none}
+a:hover{text-decoration:underline}
+.up{color:var(--green)}.dn{color:var(--red)}
+.empty{color:var(--mut);text-align:center;padding:20px 0}
+tr.sig td{background:#edf5f1}tr.red td{background:#faeceb}
+tr.sig td:first-child,tr.red td:first-child{padding-left:12px}
 .why{color:var(--mut);white-space:normal}
+@media(max-width:640px){.top,nav.tabs{padding-left:16px;padding-right:16px}main{padding:20px 16px 60px}h1{font-size:28px}.card{padding:18px 16px}.sync{display:none}}
 """
 
 JS = """
@@ -394,6 +423,17 @@ def table(head, rows_html):
     return f'<div class="wrap"><table><tr>{th}</tr>{body}</table></div>'
 
 
+def card(title, hint, inner):
+    h = f'<p class="hint">{hint}</p>' if hint else ""
+    return f'<div class="card"><h2>{title}</h2>{h}{inner}</div>'
+
+
+def stats(items):
+    out = "".join(f'<div class="stat"><div class="k">{k}</div><div class="v {c}">{v}</div>'
+                  f'<div class="s">{s}</div></div>' for k, v, s, c in items)
+    return f'<div class="stats">{out}</div>'
+
+
 def panel_mcb(g):
     cass = [f"<tr class='sig'><td>{link(e['symbol'])}</td><td>{e['anchor_date']}</td>"
             f"<td class='up'>{e['move']:+.0f} %</td><td>{vol(e['j1_vol'])}</td>"
@@ -415,23 +455,29 @@ def panel_mcb(g):
     inv = [f"<tr><td>{link(e['symbol'])}</td><td>{e['anchor_date']}</td>"
            f"<td class='why'>{html.escape(e['why'])}</td></tr>"
            for e in sorted(g["invalide"], key=lambda x: x["anchor_date"], reverse=True)]
-    return f"""
-<div class="crit"><b>J1</b> : small cap &lt; {MAX_MARKET_CAP/1e6:g} M$, prix ≥ {MIN_PRICE:g} $, hausse ≥ {MIN_MOVE_PCT} %, volume ≥ {MIN_VOLUME_J1/1e6:g} M (1 à {RUN_MAX_DAYS} jours) &nbsp;·&nbsp;
-<b>Consolidation</b> : 1 à {CONSOL_MAX_DAYS} jours, volume ≤ J1 / {VOLUME_RATIO}, clôtures entre {CONSOL_MIN_LEVEL:.0%} de la plage du J1 et son plus haut &nbsp;·&nbsp;
-<b>Cassure</b> : clôture au-dessus du plus haut du J1</div>
-
-<h2>En consolidation : à surveiller demain</h2>
-<p class="hint">C'est ici que tu prépares ta cassure + retest sur 30 minutes. Niveaux : plafond de consolidation, puis plus haut du J1.</p>
-{table(["Ticker","J1","Move J1","Vol J1","Jours conso","Vol conso max","Dernière clôture","Milieu J1","Plafond conso","Haut J1"], cons)}
-
-<h2>Cassures récentes (clôture au-dessus du haut du J1)</h2>
-{table(["Ticker","J1","Move J1","Vol J1","Jours conso","Vol conso max","Date cassure","Clôture","Vol cassure","Plafond conso / Haut J1"], cass)}
-
-<h2>Nouveaux J1 (en attente de consolidation)</h2>
-{table(["Ticker","J1","Move J1","Vol J1","Jours gros vol","Dernière clôture","Milieu J1","Haut J1"], runs)}
-
-<h2>Invalidés</h2>
-{table(["Ticker","J1","Raison"], inv)}"""
+    crit = (f"<div class='crit'><b>J1</b> : small cap &lt; {MAX_MARKET_CAP/1e6:g} M$, prix ≥ {MIN_PRICE:g} $, "
+            f"hausse ≥ {MIN_MOVE_PCT} %, volume ≥ {MIN_VOLUME_J1/1e6:g} M (1 à {RUN_MAX_DAYS} jours)<br>"
+            f"<b>Consolidation</b> : 1 à {CONSOL_MAX_DAYS} jours, volume ≤ J1 / {VOLUME_RATIO}, clôtures entre "
+            f"{CONSOL_MIN_LEVEL:.0%} de la plage du J1 et son plus haut<br>"
+            f"<b>Cassure</b> : clôture au-dessus du plus haut du J1</div>")
+    return (
+        '<span class="pill">📊 Screener</span><h1>Mid Candle Breakout</h1>'
+        '<p class="lead">Small caps : J1 à gros volume, consolidation à volume bas, cassure du haut du J1</p>'
+        + stats([("En consolidation", len(g["consol"]), "à surveiller demain", ""),
+                 ("Cassures récentes", len(g["cassure"]), "clôture au-dessus du haut du J1", "up" if g["cassure"] else ""),
+                 ("Nouveaux J1", len(g["run"]), "en attente de consolidation", ""),
+                 ("Invalidés", len(g["invalide"]), "consolidation échouée", "")])
+        + card("Critères", "", crit)
+        + card("En consolidation : à surveiller demain",
+               "C'est ici que tu prépares ta cassure + retest sur 30 minutes. Niveaux : plafond de consolidation, puis plus haut du J1.",
+               table(["Ticker", "J1", "Move J1", "Vol J1", "Jours conso", "Vol conso max", "Dernière clôture",
+                      "Milieu J1", "Plafond conso", "Haut J1"], cons))
+        + card("Cassures récentes", "Clôture au-dessus du plus haut du J1 après la consolidation.",
+               table(["Ticker", "J1", "Move J1", "Vol J1", "Jours conso", "Vol conso max", "Date cassure",
+                      "Clôture", "Vol cassure", "Plafond conso / Haut J1"], cass))
+        + card("Nouveaux J1", "En attente de consolidation.",
+               table(["Ticker", "J1", "Move J1", "Vol J1", "Jours gros vol", "Dernière clôture", "Milieu J1", "Haut J1"], runs))
+        + card("Invalidés", "", table(["Ticker", "J1", "Raison"], inv)))
 
 
 def panel_frd(g):
@@ -449,37 +495,46 @@ def panel_frd(g):
             f"<td>${e['frd_close']:.2f}</td><td>${e['prev_open']:.2f}</td><td>${e['peak']:.2f}</td>"
             f"<td>{pct(e['drop'])}</td><td>{vol(e['frd_vol'])}</td></tr>"
             for e in sorted(g["frd"], key=lambda x: x["frd_date"], reverse=True)]
-    return f"""
-<div class="crit"><b>Entrée dans la liste</b> : small cap &lt; {FRD_MAX_MARKET_CAP/1e6:g} M$, clôture ≥ {FRD_MIN_PRICE:g} $, volume ≥ {FRD_MIN_VOLUME/1e6:g} M,
-clôture au-dessus de la veille, {FRD_RUN_DAYS} jours consécutifs de clôtures en hausse et ≥ {FRD_MIN_GAIN_PCT} % de gain sur {FRD_RUN_DAYS} jours &nbsp;·&nbsp;
-<b>First Red Day</b> : un jour clôture sous l'ouverture de la veille</div>
-
-<h2>Nouveaux candidats du jour</h2>
-<p class="hint">Titres qui viennent d'entrer dans la liste de surveillance aujourd'hui.</p>
-{table(["Ticker","Entré le","Gain "+str(FRD_RUN_DAYS)+" j","Clôture","Jour","Volume","Haut de la course"], new)}
-
-<h2>Surveillance en cours</h2>
-<p class="hint">Aucun First Red Day depuis leur entrée dans la liste.</p>
-{table(["Ticker","Entré le","Gain "+str(FRD_RUN_DAYS)+" j","Dernière clôture","Jour","Volume","Haut de la course","Vs le haut","Jours"], watch)}
-
-<h2>First Red Day déjà eu lieu</h2>
-<p class="hint">Les lignes en rouge sont celles dont le First Red Day s'est produit aujourd'hui.</p>
-{table(["Ticker","Entré le","Gain "+str(FRD_RUN_DAYS)+" j","Date FRD","Clôture FRD","Ouverture veille","Haut de la course","Recul vs le haut","Volume FRD"], done)}"""
+    today_frd = sum(1 for e in g["frd"] if e["is_today"])
+    crit = (f"<div class='crit'><b>Entrée dans la liste</b> : small cap &lt; {FRD_MAX_MARKET_CAP/1e6:g} M$, "
+            f"clôture ≥ {FRD_MIN_PRICE:g} $, volume ≥ {FRD_MIN_VOLUME/1e6:g} M, clôture au-dessus de la veille, "
+            f"{FRD_RUN_DAYS} jours consécutifs de clôtures en hausse et ≥ {FRD_MIN_GAIN_PCT} % de gain sur {FRD_RUN_DAYS} jours<br>"
+            f"<b>First Red Day</b> : un jour clôture sous l'ouverture de la veille</div>")
+    gl = f"Gain {FRD_RUN_DAYS} j"
+    return (
+        '<span class="pill">📊 Screener</span><h1>First Red Day</h1>'
+        f'<p class="lead">Small caps : course de {FRD_RUN_DAYS} jours (+{FRD_MIN_GAIN_PCT} %), puis premier jour sous l\'ouverture de la veille</p>'
+        + stats([("Nouveaux candidats", len(g["new"]), "entrés aujourd'hui", "up" if g["new"] else ""),
+                 ("En surveillance", len(g["watch"]), "pas encore de First Red Day", ""),
+                 ("FRD aujourd'hui", today_frd, "premier jour rouge ce soir", "dn" if today_frd else ""),
+                 ("FRD déjà eu lieu", len(g["frd"]), "sur les derniers jours", "")])
+        + card("Critères", "", crit)
+        + card("Nouveaux candidats du jour", "Titres qui viennent d'entrer dans la liste de surveillance aujourd'hui.",
+               table(["Ticker", "Entré le", gl, "Clôture", "Jour", "Volume", "Haut de la course"], new))
+        + card("Surveillance en cours", "Aucun First Red Day depuis leur entrée dans la liste.",
+               table(["Ticker", "Entré le", gl, "Dernière clôture", "Jour", "Volume", "Haut de la course",
+                      "Vs le haut", "Jours"], watch))
+        + card("First Red Day déjà eu lieu", "Les lignes en rouge sont celles dont le First Red Day s'est produit aujourd'hui.",
+               table(["Ticker", "Entré le", gl, "Date FRD", "Clôture FRD", "Ouverture veille", "Haut de la course",
+                      "Recul vs le haut", "Volume FRD"], done)))
 
 
 def page(mcb, frd, updated):
     upd = datetime.fromisoformat(updated).strftime("%Y-%m-%d %H:%M UTC")
+    wm = '<div class="wm"></div>' if (ROOT / "docs" / "logo.png").exists() else ""
     return f"""<!doctype html><html lang="fr"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"><title>Screener small caps</title>
-<style>{CSS}</style></head><body>
-<h1>Screener small caps</h1>
-<div class="sub">Dernière mise à jour : {upd}</div>
-<div class="tabs" role="tablist">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>CMP Screener</title>
+{FONTS}<style>{CSS}</style></head><body>{wm}
+<header class="top"><div class="brand">CMP Screener<small>Small caps</small></div>
+<div class="sync">Mis à jour {upd}</div></header>
+<nav class="tabs" role="tablist">
 <button class="tab on" data-t="mcb">Mid Candle Breakout<span class="badge">{len(mcb['consol'])}</span></button>
 <button class="tab" data-t="frd">First Red Day<span class="badge">{len(frd['new']) + len(frd['watch'])}</span></button>
-</div>
+</nav>
+<main>
 <section id="mcb" class="panel">{panel_mcb(mcb)}</section>
 <section id="frd" class="panel" hidden>{panel_frd(frd)}</section>
+</main>
 <script>{JS}</script>
 </body></html>"""
 
