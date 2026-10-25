@@ -1,11 +1,15 @@
 <!doctype html><html lang="fr"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"><title>Screener Mid Candle Breakout</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Screener small caps</title>
 <style>
 :root{--bg:#fff;--card:#f6f7f9;--tx:#16181d;--mut:#6b7280;--bd:#e3e6ea;--up:#0a8f4d;--dn:#d23b3b;--ac:#2563eb}
 @media(prefers-color-scheme:dark){:root{--bg:#0f1115;--card:#171a21;--tx:#e8eaee;--mut:#8b93a1;--bd:#262b35;--up:#3ecf8e;--dn:#f26d6d;--ac:#6ea0ff}}
 body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,sans-serif;padding:16px;max-width:1100px;margin:auto}
 h1{font-size:22px;margin:8px 0 2px}h2{font-size:16px;margin:28px 0 4px}
 .sub{color:var(--mut);font-size:13px}.hint{color:var(--mut);font-size:13px;margin:0 0 8px}
+.tabs{display:flex;gap:6px;margin:16px 0 4px;border-bottom:1px solid var(--bd);overflow-x:auto}
+.tab{background:none;border:0;border-bottom:2px solid transparent;color:var(--mut);font:600 15px system-ui,sans-serif;padding:10px 14px;cursor:pointer;white-space:nowrap}
+.tab.on{color:var(--tx);border-bottom-color:var(--ac)}
+.badge{display:inline-block;min-width:18px;padding:0 6px;margin-left:6px;border-radius:9px;background:var(--card);border:1px solid var(--bd);font-size:12px;color:var(--mut)}
 .crit{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;margin:14px 0;font-size:13px;color:var(--mut)}
 .crit b{color:var(--tx)}
 .wrap{overflow-x:auto;border:1px solid var(--bd);border-radius:10px}
@@ -14,12 +18,18 @@ th,td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--bd)}
 th{background:var(--card);font-weight:600;font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.03em}
 tr:last-child td{border-bottom:0}
 a{color:var(--ac);font-weight:600;text-decoration:none}
-.up{color:var(--up)}.empty{color:var(--mut);text-align:center;padding:18px}
-tr.sig{background:color-mix(in srgb,var(--up) 10%,transparent)}.why{color:var(--mut);white-space:normal}
+.up{color:var(--up)}.dn{color:var(--dn)}.empty{color:var(--mut);text-align:center;padding:18px}
+tr.sig{background:color-mix(in srgb,var(--up) 10%,transparent)}tr.red{background:color-mix(in srgb,var(--dn) 10%,transparent)}
+.why{color:var(--mut);white-space:normal}
 </style></head><body>
-<h1>Screener Mid Candle Breakout</h1>
-<div class="sub">Dernière mise à jour : 2026-10-23 23:53 UTC</div>
-<div class="crit"><b>J1</b> : small cap &lt; 300 M$, hausse ≥ 50 %, volume ≥ 100 M (1 à 2 jours) &nbsp;·&nbsp;
+<h1>Screener small caps</h1>
+<div class="sub">Dernière mise à jour : 2026-10-25 22:54 UTC</div>
+<div class="tabs" role="tablist">
+<button class="tab on" data-t="mcb">Mid Candle Breakout<span class="badge">0</span></button>
+<button class="tab" data-t="frd">First Red Day<span class="badge">0</span></button>
+</div>
+<section id="mcb" class="panel">
+<div class="crit"><b>J1</b> : small cap &lt; 300 M$, prix ≥ 0.5 $, hausse ≥ 50 %, volume ≥ 100 M (1 à 2 jours) &nbsp;·&nbsp;
 <b>Consolidation</b> : 1 à 5 jours, volume ≤ J1 / 10, clôtures entre 40% de la plage du J1 et son plus haut &nbsp;·&nbsp;
 <b>Cassure</b> : clôture au-dessus du plus haut du J1</div>
 
@@ -34,5 +44,29 @@ tr.sig{background:color-mix(in srgb,var(--up) 10%,transparent)}.why{color:var(--
 <div class="wrap"><table><tr><th>Ticker</th><th>J1</th><th>Move J1</th><th>Vol J1</th><th>Jours gros vol</th><th>Dernière clôture</th><th>Milieu J1</th><th>Haut J1</th></tr><tr><td colspan="8" class="empty">Aucun titre</td></tr></table></div>
 
 <h2>Invalidés</h2>
-<div class="wrap"><table><tr><th>Ticker</th><th>J1</th><th>Raison</th></tr><tr><td><a href="https://finance.yahoo.com/quote/PRSO" target="_blank" rel="noopener">PRSO</a></td><td>2026-10-20</td><td class='why'>2026-10-21 : clôture 0.39 $ sous 40% de la plage J1 (0.51 $)</td></tr></table></div>
+<div class="wrap"><table><tr><th>Ticker</th><th>J1</th><th>Raison</th></tr><tr><td><a href="https://finance.yahoo.com/quote/PRSO" target="_blank" rel="noopener">PRSO</a></td><td>2026-10-20</td><td class='why'>2026-10-21 : clôture 0.39 $ sous 40% de la plage J1 (0.51 $)</td></tr></table></div></section>
+<section id="frd" class="panel" hidden>
+<div class="crit"><b>Entrée dans la liste</b> : small cap &lt; 500 M$, clôture ≥ 1 $, volume ≥ 10 M,
+clôture au-dessus de la veille, 3 jours consécutifs de clôtures en hausse et ≥ 200 % de gain sur 3 jours &nbsp;·&nbsp;
+<b>First Red Day</b> : un jour clôture sous l'ouverture de la veille</div>
+
+<h2>Nouveaux candidats du jour</h2>
+<p class="hint">Titres qui viennent d'entrer dans la liste de surveillance aujourd'hui.</p>
+<div class="wrap"><table><tr><th>Ticker</th><th>Entré le</th><th>Gain 3 j</th><th>Clôture</th><th>Jour</th><th>Volume</th><th>Haut de la course</th></tr><tr><td colspan="7" class="empty">Aucun titre</td></tr></table></div>
+
+<h2>Surveillance en cours</h2>
+<p class="hint">Aucun First Red Day depuis leur entrée dans la liste.</p>
+<div class="wrap"><table><tr><th>Ticker</th><th>Entré le</th><th>Gain 3 j</th><th>Dernière clôture</th><th>Jour</th><th>Volume</th><th>Haut de la course</th><th>Vs le haut</th><th>Jours</th></tr><tr><td colspan="9" class="empty">Aucun titre</td></tr></table></div>
+
+<h2>First Red Day déjà eu lieu</h2>
+<p class="hint">Les lignes en rouge sont celles dont le First Red Day s'est produit aujourd'hui.</p>
+<div class="wrap"><table><tr><th>Ticker</th><th>Entré le</th><th>Gain 3 j</th><th>Date FRD</th><th>Clôture FRD</th><th>Ouverture veille</th><th>Haut de la course</th><th>Recul vs le haut</th><th>Volume FRD</th></tr><tr><td colspan="9" class="empty">Aucun titre</td></tr></table></div></section>
+<script>
+(function(){var t=document.querySelectorAll('.tab'),p=document.querySelectorAll('.panel');
+function show(id){t.forEach(function(b){b.classList.toggle('on',b.dataset.t===id)});
+p.forEach(function(s){s.hidden=s.id!==id});try{history.replaceState(null,'','#'+id)}catch(e){}}
+t.forEach(function(b){b.addEventListener('click',function(){show(b.dataset.t)})});
+var h='';try{h=(location.hash||'').slice(1)}catch(e){}
+if(h==='frd'||h==='mcb')show(h);})();
+</script>
 </body></html>
