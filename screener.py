@@ -17,7 +17,7 @@ import yfinance as yf
 from yfinance import EquityQuery
 
 # ======================= ONGLET 1 : MID CANDLE BREAKOUT =========================
-MIN_MOVE_PCT      = 50          # J1 : hausse minimale en %
+MIN_MOVE_PCT      = 80          # J1 : hausse minimale en %
 MIN_VOLUME_J1     = 40_000_000  # J1 : volume minimum (actions)
 # Bourses acceptées (cotation minimale) : NYSE, NYSE American, NYSE Arca, Nasdaq (3 segments), Cboe BZX
 # (les marchés OTC / Pink sont exclus)
