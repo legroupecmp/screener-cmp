@@ -19,7 +19,7 @@ from yfinance import EquityQuery
 # ======================= ONGLET 1 : MID CANDLE BREAKOUT =========================
 MIN_MOVE_PCT      = 50          # J1 : hausse minimale en %
 MAX_MARKET_CAP    = 300_000_000 # small cap : capitalisation max ($)
-MIN_VOLUME_J1     = 100_000_000 # J1 : volume minimum (actions)
+MIN_VOLUME_J1     = 40_000_000 # J1 : volume minimum (actions)
 MIN_PRICE         = 0.50        # J1 : clôture minimum ($) - sinon le titre est ignoré
 VOLUME_RATIO      = 10          # consolidation : volume <= volume J1 / 10
 RUN_MAX_DAYS      = 2           # le "J1" peut compter 1 ou 2 jours de gros volume
