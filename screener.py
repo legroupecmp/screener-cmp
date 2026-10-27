@@ -18,8 +18,10 @@ from yfinance import EquityQuery
 
 # ======================= ONGLET 1 : MID CANDLE BREAKOUT =========================
 MIN_MOVE_PCT      = 50          # J1 : hausse minimale en %
-MAX_MARKET_CAP    = 300_000_000 # small cap : capitalisation max ($)
-MIN_VOLUME_J1     = 40_000_000 # J1 : volume minimum (actions)
+MIN_VOLUME_J1     = 40_000_000  # J1 : volume minimum (actions)
+# Bourses acceptées (cotation minimale) : NYSE, NYSE American, NYSE Arca, Nasdaq (3 segments), Cboe BZX
+# (les marchés OTC / Pink sont exclus)
+MCB_EXCHANGES     = ["NYQ", "ASE", "PCX", "NMS", "NCM", "NGM", "BTS"]
 MIN_PRICE         = 0.50        # J1 : clôture minimum ($) - sinon le titre est ignoré
 VOLUME_RATIO      = 10          # consolidation : volume <= volume J1 / 10
 RUN_MAX_DAYS      = 2           # le "J1" peut compter 1 ou 2 jours de gros volume
@@ -82,9 +84,8 @@ def batch_history(symbols, period="1mo"):
 def find_j1_today():
     """Small caps du jour qui respectent les critères J1 (screener Yahoo)."""
     q = EquityQuery("and", [
-        EquityQuery("eq", ["region", "us"]),
+        EquityQuery("is-in", ["exchange"] + MCB_EXCHANGES),
         EquityQuery("gt", ["percentchange", MIN_MOVE_PCT]),
-        EquityQuery("lt", ["intradaymarketcap", MAX_MARKET_CAP]),
         EquityQuery("gt", ["dayvolume", MIN_VOLUME_J1]),
         EquityQuery("gt", ["intradayprice", MIN_PRICE]),
     ])
@@ -455,7 +456,7 @@ def panel_mcb(g):
     inv = [f"<tr><td>{link(e['symbol'])}</td><td>{e['anchor_date']}</td>"
            f"<td class='why'>{html.escape(e['why'])}</td></tr>"
            for e in sorted(g["invalide"], key=lambda x: x["anchor_date"], reverse=True)]
-    crit = (f"<div class='crit'><b>J1</b> : small cap &lt; {MAX_MARKET_CAP/1e6:g} M$, prix ≥ {MIN_PRICE:g} $, "
+    crit = (f"<div class='crit'><b>J1</b> : coté NYSE / Nasdaq, prix ≥ {MIN_PRICE:g} $, "
             f"hausse ≥ {MIN_MOVE_PCT} %, volume ≥ {MIN_VOLUME_J1/1e6:g} M (1 à {RUN_MAX_DAYS} jours)<br>"
             f"<b>Consolidation</b> : 1 à {CONSOL_MAX_DAYS} jours, volume ≤ J1 / {VOLUME_RATIO}, clôtures entre "
             f"{CONSOL_MIN_LEVEL:.0%} de la plage du J1 et son plus haut<br>"
