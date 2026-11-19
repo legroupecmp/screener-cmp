@@ -5,19 +5,15 @@
    "added": "2026-11-07"
   },
   {
-   "symbol": "SLS",
-   "added": "2026-11-18"
+   "symbol": "SVRE",
+   "added": "2026-11-19"
   },
   {
-   "symbol": "GP",
-   "added": "2026-11-18"
-  },
-  {
-   "symbol": "FRTT",
-   "added": "2026-11-18"
+   "symbol": "AKAN",
+   "added": "2026-11-19"
   }
  ],
- "updated": "2026-11-18T02:58:58+00:00",
+ "updated": "2026-11-19T02:41:11+00:00",
  "frd_watch": [
   {
    "symbol": "POAS",
