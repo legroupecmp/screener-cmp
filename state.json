@@ -5,15 +5,23 @@
    "added": "2026-11-07"
   },
   {
-   "symbol": "SVRE",
-   "added": "2026-11-19"
+   "symbol": "NXAT",
+   "added": "2026-11-21"
   },
   {
-   "symbol": "AKAN",
-   "added": "2026-11-19"
+   "symbol": "MEDS",
+   "added": "2026-11-21"
+  },
+  {
+   "symbol": "MSS",
+   "added": "2026-11-21"
+  },
+  {
+   "symbol": "LVWR",
+   "added": "2026-11-21"
   }
  ],
- "updated": "2026-11-20T02:27:19+00:00",
+ "updated": "2026-11-21T02:36:36+00:00",
  "frd_watch": [
   {
    "symbol": "POAS",
