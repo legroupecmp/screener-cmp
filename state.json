@@ -1,10 +1,6 @@
 {
  "watch": [
   {
-   "symbol": "CIIT",
-   "added": "2026-11-07"
-  },
-  {
    "symbol": "NXAT",
    "added": "2026-11-21"
   },
@@ -19,13 +15,20 @@
   {
    "symbol": "LVWR",
    "added": "2026-11-21"
+  },
+  {
+   "symbol": "WETO",
+   "added": "2026-11-24"
+  },
+  {
+   "symbol": "BNAI",
+   "added": "2026-11-24"
+  },
+  {
+   "symbol": "PAAI",
+   "added": "2026-11-24"
   }
  ],
- "updated": "2026-11-21T02:36:36+00:00",
- "frd_watch": [
-  {
-   "symbol": "POAS",
-   "added": "2026-11-12"
-  }
- ]
+ "updated": "2026-11-24T05:23:30+00:00",
+ "frd_watch": []
 }
